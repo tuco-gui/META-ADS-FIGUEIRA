@@ -1,15 +1,48 @@
 export const openAiTools: any[] = [
   {
     type: "function",
-    name: "getAdAccount",
-    description: "Consulta dados básicos da conta de anúncios Meta configurada.",
+    name: "listBusinesses",
+    description: "Lista Business Managers acessíveis pelo token Meta configurado.",
     parameters: { type: "object", properties: {}, required: [], additionalProperties: false }
+  },
+  {
+    type: "function",
+    name: "listAdAccounts",
+    description: "Lista todas as contas de anúncios acessíveis pelo token Meta configurado.",
+    parameters: { type: "object", properties: {}, required: [], additionalProperties: false }
+  },
+  {
+    type: "function",
+    name: "setActiveAdAccount",
+    description: "Define a conta de anúncios ativa da sessão de chat.",
+    parameters: {
+      type: "object",
+      properties: { adAccountId: { type: "string" } },
+      required: ["adAccountId"],
+      additionalProperties: false
+    }
+  },
+  {
+    type: "function",
+    name: "getAdAccount",
+    description: "Consulta dados básicos da conta de anúncios Meta selecionada ou informada.",
+    parameters: {
+      type: "object",
+      properties: { adAccountId: { type: "string" } },
+      required: [],
+      additionalProperties: false
+    }
   },
   {
     type: "function",
     name: "listCampaigns",
     description: "Lista campanhas da conta de anúncios Meta.",
-    parameters: { type: "object", properties: {}, required: [], additionalProperties: false }
+    parameters: {
+      type: "object",
+      properties: { adAccountId: { type: "string" } },
+      required: [],
+      additionalProperties: false
+    }
   },
   {
     type: "function",
@@ -17,7 +50,7 @@ export const openAiTools: any[] = [
     description: "Lista conjuntos de anúncios. Pode filtrar por campaignId.",
     parameters: {
       type: "object",
-      properties: { campaignId: { type: "string" } },
+      properties: { campaignId: { type: "string" }, adAccountId: { type: "string" } },
       required: [],
       additionalProperties: false
     }

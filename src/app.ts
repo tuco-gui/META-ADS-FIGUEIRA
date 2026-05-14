@@ -10,11 +10,13 @@ import { router } from "./http/routes.js";
 
 export function createApp() {
   const app = express();
+  app.set("trust proxy", 1);
 
   app.use(helmet());
   app.use(
     cors({
-      origin: env.CORS_ORIGIN === "*" ? "*" : env.CORS_ORIGIN.split(",").map((item) => item.trim())
+      origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN.split(",").map((item) => item.trim()),
+      credentials: true
     })
   );
   app.use(

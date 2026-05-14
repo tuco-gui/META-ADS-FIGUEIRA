@@ -3,6 +3,8 @@ declare module "node:crypto" {
   export default crypto;
 }
 
+declare const Buffer: any;
+
 declare module "node:fs/promises" {
   export const appendFile: any;
   export const mkdir: any;

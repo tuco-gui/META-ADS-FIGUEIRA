@@ -7,6 +7,23 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <section id="loginView" class="login-view">
+      <form id="loginForm" class="panel login-panel">
+        <p class="eyebrow">Acesso restrito</p>
+        <h1>Meta Ads Figueira</h1>
+        <label>
+          E-mail
+          <input id="email" type="email" autocomplete="username" value="sguilherme@sz4marketing.com" />
+        </label>
+        <label>
+          Senha
+          <input id="password" type="password" autocomplete="current-password" />
+        </label>
+        <button type="submit">Entrar</button>
+        <p id="loginError" class="error-text"></p>
+      </form>
+    </section>
+
     <main class="shell">
       <section class="panel header">
         <div>
@@ -16,7 +33,10 @@
             Operacao assistida para campanhas, conjuntos, targeting e auditoria.
           </p>
         </div>
-        <button id="healthButton" class="icon-button" title="Verificar API">OK</button>
+        <div class="header-actions">
+          <button id="healthButton" class="icon-button" title="Verificar API">OK</button>
+          <button id="logoutButton">Sair</button>
+        </div>
       </section>
 
       <section class="grid">
@@ -40,9 +60,17 @@
           <h2>Testes rapidos</h2>
           <div class="stack">
             <button id="configButton">Validar .env</button>
-            <button id="accountButton">Conta de anuncios</button>
+            <button id="businessesButton">Negócios</button>
+            <button id="accountsButton">Contas</button>
+            <button id="accountButton">Conta ativa</button>
             <button id="campaignsButton">Campanhas</button>
           </div>
+          <label>
+            Conta de anúncios
+            <select id="adAccountSelect">
+              <option value="">Selecione uma conta</option>
+            </select>
+          </label>
           <label>
             Ad set ID
             <input id="adSetId" placeholder="ADSET_ID" />

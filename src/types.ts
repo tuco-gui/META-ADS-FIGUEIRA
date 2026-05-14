@@ -24,6 +24,7 @@ export interface MetaAdSet {
   effective_status?: string;
   configured_status?: string;
   campaign_id?: string;
+  account_id?: string;
   campaign?: {
     id?: string;
     name?: string;

@@ -2,8 +2,34 @@ const sessionId = `web-${crypto.randomUUID()}`;
 const chatLog = document.querySelector("#chatLog");
 const output = document.querySelector("#output");
 const sessionBadge = document.querySelector("#sessionBadge");
+const loginView = document.querySelector("#loginView");
+const shell = document.querySelector(".shell");
+const accountSelect = document.querySelector("#adAccountSelect");
 
 sessionBadge.textContent = sessionId;
+shell.hidden = true;
+
+initAuth();
+
+document.querySelector("#loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const email = document.querySelector("#email").value.trim();
+  const password = document.querySelector("#password").value;
+  try {
+    await postJson("/auth/login", { email, password });
+    document.querySelector("#loginError").textContent = "";
+    showApp();
+    await loadAccounts();
+  } catch (error) {
+    document.querySelector("#loginError").textContent = "E-mail ou senha inválidos.";
+  }
+});
+
+document.querySelector("#logoutButton").addEventListener("click", async () => {
+  await postJson("/auth/logout", {});
+  loginView.hidden = false;
+  shell.hidden = true;
+});
 
 document.querySelector("#chatForm").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -18,8 +44,10 @@ document.querySelector("#chatForm").addEventListener("submit", async (event) => 
 
 bind("#healthButton", () => getJson("/health"));
 bind("#configButton", () => getJson("/config/validate"));
-bind("#accountButton", () => getJson("/meta/ad-account"));
-bind("#campaignsButton", () => getJson("/meta/campaigns"));
+bind("#businessesButton", () => getJson("/meta/businesses"));
+bind("#accountsButton", loadAccounts);
+bind("#accountButton", () => getJson(withAdAccount("/meta/ad-account")));
+bind("#campaignsButton", () => getJson(withAdAccount("/meta/campaigns")));
 bind("#adSetButton", () => getJson(`/meta/adsets/${adSetId()}`));
 bind("#targetingButton", () => getJson(`/meta/adsets/${adSetId()}/targeting`));
 bind("#diagnoseButton", () => getJson(`/meta/adsets/${adSetId()}/diagnose`));
@@ -41,7 +69,7 @@ function adSetId() {
 }
 
 async function getJson(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, { credentials: "same-origin" });
   return parseResponse(response);
 }
 
@@ -49,9 +77,49 @@ async function postJson(url, body) {
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
     body: JSON.stringify(body)
   });
   return parseResponse(response);
+}
+
+async function initAuth() {
+  try {
+    const current = await getJson("/auth/me");
+    if (current.authenticated) {
+      showApp();
+      await loadAccounts();
+    } else {
+      loginView.hidden = false;
+    }
+  } catch {
+    loginView.hidden = false;
+  }
+}
+
+function showApp() {
+  loginView.hidden = true;
+  shell.hidden = false;
+}
+
+async function loadAccounts() {
+  const result = await getJson("/meta/ad-accounts");
+  accountSelect.innerHTML = '<option value="">Selecione uma conta</option>';
+  for (const account of result.data ?? []) {
+    const option = document.createElement("option");
+    option.value = account.id;
+    option.textContent = `${account.name ?? "Conta"} (${account.id})`;
+    accountSelect.appendChild(option);
+  }
+  setOutput(result);
+  return result;
+}
+
+function withAdAccount(path) {
+  const selected = accountSelect.value;
+  if (!selected) return path;
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}adAccountId=${encodeURIComponent(selected)}`;
 }
 
 async function parseResponse(response) {

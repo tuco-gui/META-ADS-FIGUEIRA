@@ -15,10 +15,13 @@ OPENAI_API_KEY=...
 META_ACCESS_TOKEN=...
 META_APP_ID=...
 META_APP_SECRET=...
-META_BUSINESS_ID=...
-META_AD_ACCOUNT_ID=act_...
 META_API_VERSION=v24.0
 PORT=3000
+
+ADMIN_EMAIL=sguilherme@sz4marketing.com
+ADMIN_PASSWORD_HASH=scrypt:...
+SESSION_SECRET=...
+AUTH_COOKIE_SECURE=false
 ```
 
 Suba o servidor:
@@ -32,6 +35,9 @@ Em outro Terminal, defina variaveis para os testes:
 
 ```bash
 export BASE_URL="http://localhost:3000"
+export ADMIN_EMAIL="sguilherme@sz4marketing.com"
+export ADMIN_PASSWORD="COLOQUE_A_SENHA_DO_LOGIN_AQUI"
+export AD_ACCOUNT_ID="act_COLOQUE_A_CONTA_AQUI_DEPOIS_DE_LISTAR"
 export ADSET_ID="COLOQUE_UM_ADSET_ID_REAL_AQUI"
 ```
 
@@ -62,12 +68,29 @@ Resultado esperado:
 }
 ```
 
+Faça login para liberar as rotas protegidas:
+
+```bash
+curl -sS -i -c cookies.txt -X POST "$BASE_URL/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"email\": \"$ADMIN_EMAIL\",
+    \"password\": \"$ADMIN_PASSWORD\"
+  }"
+```
+
+Confirmar sessão:
+
+```bash
+curl -sS -b cookies.txt "$BASE_URL/auth/me" | jq
+```
+
 ## 2. Verificar variaveis .env
 
 Este endpoint nao retorna tokens nem secrets. Ele mostra apenas presenca e alguns valores nao sensiveis.
 
 ```bash
-curl -sS "$BASE_URL/config/validate" | jq
+curl -sS -b cookies.txt "$BASE_URL/config/validate" | jq
 ```
 
 Verifique se:
@@ -76,14 +99,28 @@ Verifique se:
 - `meta.accessTokenPresent` esta `true`
 - `meta.appIdPresent` esta `true`
 - `meta.appSecretPresent` esta `true`
-- `meta.businessIdPresent` esta `true`
-- `meta.adAccountId` aparece mascarado
+- `meta.defaultBusinessIdPresent` pode estar `false` em modo multi-conta
+- `meta.adAccountId` pode aparecer `null` em modo multi-conta
 - `meta.apiVersion` esta correta
 
 ## 3. Listar conta de anuncios
 
+Primeiro liste todas as contas acessíveis pelo token:
+
 ```bash
-curl -sS "$BASE_URL/meta/ad-account" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/ad-accounts" | jq
+```
+
+Escolha uma conta e defina:
+
+```bash
+export AD_ACCOUNT_ID="act_123456789"
+```
+
+Agora consulte a conta selecionada:
+
+```bash
+curl -sS -b cookies.txt "$BASE_URL/meta/ad-account?adAccountId=$AD_ACCOUNT_ID" | jq
 ```
 
 Resultado esperado:
@@ -100,7 +137,7 @@ Se retornar erro de permissao, revise `ads_read`, `ads_management` e acesso da c
 ## 4. Listar campanhas
 
 ```bash
-curl -sS "$BASE_URL/meta/campaigns" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/campaigns?adAccountId=$AD_ACCOUNT_ID" | jq
 ```
 
 Resultado esperado:
@@ -121,14 +158,14 @@ Resultado esperado:
 ## 5. Listar conjuntos
 
 ```bash
-curl -sS "$BASE_URL/meta/adsets" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/adsets?adAccountId=$AD_ACCOUNT_ID" | jq
 ```
 
 Para filtrar por campanha:
 
 ```bash
 export CAMPAIGN_ID="COLOQUE_UM_CAMPAIGN_ID_REAL_AQUI"
-curl -sS "$BASE_URL/meta/adsets?campaignId=$CAMPAIGN_ID" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/adsets?campaignId=$CAMPAIGN_ID" | jq
 ```
 
 Escolha um `id` de ad set retornado e atualize:
@@ -140,7 +177,7 @@ export ADSET_ID="ADSET_ID_REAL"
 ## 6. Buscar um conjunto especifico
 
 ```bash
-curl -sS "$BASE_URL/meta/adsets/$ADSET_ID" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/adsets/$ADSET_ID" | jq
 ```
 
 Resultado esperado:
@@ -154,7 +191,7 @@ Resultado esperado:
 ## 7. Diagnosticar targeting
 
 ```bash
-curl -sS "$BASE_URL/meta/adsets/$ADSET_ID/diagnose" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/adsets/$ADSET_ID/diagnose" | jq
 ```
 
 Resultado esperado:
@@ -179,7 +216,7 @@ Resultado esperado:
 Este comando omite `confirmation` de proposito. Deve retornar HTTP 400.
 
 ```bash
-curl -i -sS -X POST "$BASE_URL/meta/adsets/$ADSET_ID/lock-geo" \
+curl -i -sS -b cookies.txt -X POST "$BASE_URL/meta/adsets/$ADSET_ID/lock-geo" \
   -H "Content-Type: application/json" \
   -d '{
     "location": {
@@ -200,7 +237,7 @@ Resultado esperado:
 Tambem teste via chat. Esta chamada deve gerar plano e pedir confirmacao, sem executar:
 
 ```bash
-curl -sS -X POST "$BASE_URL/chat" \
+curl -sS -b cookies.txt -X POST "$BASE_URL/chat" \
   -H "Content-Type: application/json" \
   -d "{
     \"sessionId\": \"teste-lock-geo\",
@@ -219,7 +256,7 @@ Resultado esperado:
 Atencao: este comando altera um conjunto real.
 
 ```bash
-curl -sS -X POST "$BASE_URL/meta/adsets/$ADSET_ID/lock-geo" \
+curl -sS -b cookies.txt -X POST "$BASE_URL/meta/adsets/$ADSET_ID/lock-geo" \
   -H "Content-Type: application/json" \
   -d '{
     "confirmation": "CONFIRMO ALTERAR",
@@ -235,7 +272,7 @@ curl -sS -X POST "$BASE_URL/meta/adsets/$ADSET_ID/lock-geo" \
 Alternativa via chat, depois de gerar o plano no passo 8:
 
 ```bash
-curl -sS -X POST "$BASE_URL/chat" \
+curl -sS -b cookies.txt -X POST "$BASE_URL/chat" \
   -H "Content-Type: application/json" \
   -d '{
     "sessionId": "teste-lock-geo",
@@ -268,7 +305,7 @@ jq '.result.before.targeting.targeting_automation, .result.after.targeting.targe
 Confirme tambem consultando a API depois da alteracao:
 
 ```bash
-curl -sS "$BASE_URL/meta/adsets/$ADSET_ID/targeting" | jq
+curl -sS -b cookies.txt "$BASE_URL/meta/adsets/$ADSET_ID/targeting" | jq
 ```
 
 ## 11. Conferir audit.log

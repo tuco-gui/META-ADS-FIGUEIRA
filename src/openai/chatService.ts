@@ -18,10 +18,15 @@ async function getOpenAiClient(): Promise<any> {
   return openAiClient;
 }
 
-const sessions = new Map<string, { previousResponseId?: string }>();
+const sessions = new Map<string, { previousResponseId?: string; activeAdAccountId?: string }>();
 
 const stringIdSchema = z.object({ adSetId: z.string().min(1) });
-const listAdSetsSchema = z.object({ campaignId: z.string().min(1).optional() });
+const adAccountToolSchema = z.object({ adAccountId: z.string().min(1).optional() });
+const setActiveAdAccountSchema = z.object({ adAccountId: z.string().min(1) });
+const listAdSetsSchema = z.object({
+  campaignId: z.string().min(1).optional(),
+  adAccountId: z.string().min(1).optional()
+});
 const adSetInsightsSchema = z.object({
   adSetId: z.string().min(1),
   datePreset: z.string().min(1).default("last_30d")
@@ -84,7 +89,7 @@ export class ChatService {
         (item: any) => item.type === "function_call"
       );
       if (calls.length === 0) {
-        sessions.set(sessionId, { previousResponseId: response.id });
+        sessions.set(sessionId, { ...(sessions.get(sessionId) ?? state), previousResponseId: response.id });
         return {
           sessionId,
           message: response.output_text ?? "",
@@ -114,7 +119,7 @@ export class ChatService {
       } as any);
     }
 
-    sessions.set(sessionId, { previousResponseId: response.id });
+    sessions.set(sessionId, { ...(sessions.get(sessionId) ?? state), previousResponseId: response.id });
     return {
       sessionId,
       message:
@@ -131,15 +136,25 @@ export class ChatService {
   ): Promise<unknown> {
     const args = parseArguments(rawArguments);
     const context = { sessionId };
+    const state = sessions.get(sessionId) ?? {};
 
     switch (name) {
+      case "listBusinesses":
+        return metaAdsService.listBusinesses();
+      case "listAdAccounts":
+        return metaAdsService.listAdAccounts();
+      case "setActiveAdAccount": {
+        const parsed = setActiveAdAccountSchema.parse(args);
+        sessions.set(sessionId, { ...state, activeAdAccountId: parsed.adAccountId });
+        return { ok: true, activeAdAccountId: parsed.adAccountId };
+      }
       case "getAdAccount":
-        return metaAdsService.getAdAccount();
+        return metaAdsService.getAdAccount(resolveToolAdAccount(args, state.activeAdAccountId));
       case "listCampaigns":
-        return metaAdsService.listCampaigns();
+        return metaAdsService.listCampaigns(resolveToolAdAccount(args, state.activeAdAccountId));
       case "listAdSets": {
         const parsed = listAdSetsSchema.parse(args);
-        return metaAdsService.listAdSets(parsed.campaignId);
+        return metaAdsService.listAdSets(parsed.campaignId, parsed.adAccountId ?? state.activeAdAccountId);
       }
       case "getAdSet": {
         const parsed = stringIdSchema.parse(args);
@@ -310,9 +325,15 @@ function parseArguments(rawArguments: string): unknown {
   }
 }
 
+function resolveToolAdAccount(args: unknown, activeAdAccountId?: string): string | undefined {
+  const parsed = adAccountToolSchema.parse(args);
+  return parsed.adAccountId ?? activeAdAccountId;
+}
+
 const systemInstructions = `
 Voce e um assistente operacional de Meta Ads para campanhas de imoveis, WhatsApp e leads.
 Use ferramentas de leitura para consultar dados reais antes de responder sobre contas, campanhas, ad sets, targeting ou performance.
+Quando o usuario ainda nao escolheu uma conta de anuncios, use listAdAccounts e peca para escolher uma conta. Se o usuario informar uma conta, use setActiveAdAccount.
 Ferramentas de escrita nunca executam a alteracao imediatamente: elas geram um plano, riscos e a frase de confirmacao.
 Quando uma ferramenta retornar requiresConfirmation, mostre o plano de forma clara e pergunte:
 "Confirma executar esta alteracao? Responda exatamente: CONFIRMO ALTERAR"

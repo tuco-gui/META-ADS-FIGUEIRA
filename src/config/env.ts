@@ -10,6 +10,10 @@ const envSchema = z.object({
   META_BUSINESS_ID: z.string().optional(),
   META_AD_ACCOUNT_ID: z.string().optional(),
   META_API_VERSION: z.string().default("v24.0"),
+  ADMIN_EMAIL: z.string().email().default("sguilherme@sz4marketing.com"),
+  ADMIN_PASSWORD_HASH: z.string().optional(),
+  SESSION_SECRET: z.string().optional(),
+  AUTH_COOKIE_SECURE: z.enum(["true", "false"]).default("false"),
   PORT: z.coerce.number().int().positive().default(3000),
   CORS_ORIGIN: z.string().default("*"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
@@ -35,7 +39,8 @@ export const env = {
   ...parsed.data,
   META_AD_ACCOUNT_ID: normalizeAdAccountId(parsed.data.META_AD_ACCOUNT_ID),
   META_ALLOW_GEO_FALLBACK_WITHOUT_AUTOMATION:
-    parsed.data.META_ALLOW_GEO_FALLBACK_WITHOUT_AUTOMATION === "true"
+    parsed.data.META_ALLOW_GEO_FALLBACK_WITHOUT_AUTOMATION === "true",
+  AUTH_COOKIE_SECURE: parsed.data.AUTH_COOKIE_SECURE === "true"
 };
 
 export function requireEnv(name: keyof typeof env): string {

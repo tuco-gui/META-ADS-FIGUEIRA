@@ -1,9 +1,12 @@
 import { Router } from "express";
+import { login, logout, me, requireAuth } from "../auth/auth.js";
 import { env } from "../config/env.js";
 import { chatService } from "../openai/chatService.js";
 import { metaAdsService } from "../meta/metaAdsService.js";
 import {
   budgetBodySchema,
+  adAccountQuerySchema,
+  businessParamSchema,
   campaignQuerySchema,
   chatBodySchema,
   datePresetSchema,
@@ -18,6 +21,12 @@ router.get("/health", (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
+router.post("/auth/login", login);
+router.post("/auth/logout", logout);
+router.get("/auth/me", me);
+
+router.use(requireAuth);
+
 router.get("/config/validate", (_req, res) => {
   res.json({
     ok: true,
@@ -29,7 +38,7 @@ router.get("/config/validate", (_req, res) => {
       accessTokenPresent: Boolean(env.META_ACCESS_TOKEN),
       appIdPresent: Boolean(env.META_APP_ID),
       appSecretPresent: Boolean(env.META_APP_SECRET),
-      businessIdPresent: Boolean(env.META_BUSINESS_ID),
+      defaultBusinessIdPresent: Boolean(env.META_BUSINESS_ID),
       adAccountId: maskMiddle(env.META_AD_ACCOUNT_ID),
       apiVersion: env.META_API_VERSION,
       geoFallbackWithoutAutomation: env.META_ALLOW_GEO_FALLBACK_WITHOUT_AUTOMATION
@@ -60,16 +69,40 @@ function maskMiddle(value?: string): string | null {
 }
 
 router.get(
-  "/meta/ad-account",
+  "/meta/businesses",
   asyncHandler(async (_req, res) => {
-    res.json(await metaAdsService.getAdAccount());
+    res.json({ data: await metaAdsService.listBusinesses() });
+  })
+);
+
+router.get(
+  "/meta/ad-accounts",
+  asyncHandler(async (_req, res) => {
+    res.json({ data: await metaAdsService.listAdAccounts() });
+  })
+);
+
+router.get(
+  "/meta/businesses/:businessId/ad-accounts",
+  asyncHandler(async (req, res) => {
+    const parsed = businessParamSchema.parse(req.params);
+    res.json(await metaAdsService.listBusinessAdAccounts(parsed.businessId));
+  })
+);
+
+router.get(
+  "/meta/ad-account",
+  asyncHandler(async (req, res) => {
+    const parsed = adAccountQuerySchema.parse(req.query);
+    res.json(await metaAdsService.getAdAccount(parsed.adAccountId));
   })
 );
 
 router.get(
   "/meta/campaigns",
-  asyncHandler(async (_req, res) => {
-    res.json({ data: await metaAdsService.listCampaigns() });
+  asyncHandler(async (req, res) => {
+    const parsed = adAccountQuerySchema.parse(req.query);
+    res.json({ data: await metaAdsService.listCampaigns(parsed.adAccountId) });
   })
 );
 
@@ -77,7 +110,7 @@ router.get(
   "/meta/adsets",
   asyncHandler(async (req, res) => {
     const parsed = campaignQuerySchema.parse(req.query);
-    res.json({ data: await metaAdsService.listAdSets(parsed.campaignId) });
+    res.json({ data: await metaAdsService.listAdSets(parsed.campaignId, parsed.adAccountId) });
   })
 );
 

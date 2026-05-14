@@ -11,7 +11,17 @@ export class MetaClient {
   }
 
   get adAccountId(): string {
-    return requireEnv("META_AD_ACCOUNT_ID");
+    return this.resolveAdAccountId();
+  }
+
+  resolveAdAccountId(adAccountId?: string): string {
+    const resolved = normalizeAdAccountId(adAccountId ?? env.META_AD_ACCOUNT_ID);
+    if (!resolved) {
+      throw new Error(
+        "Nenhuma conta de anúncios foi selecionada. Informe adAccountId na query/body ou selecione uma conta no frontend."
+      );
+    }
+    return resolved;
   }
 
   async get<T>(path: string, params: Record<string, unknown> = {}): Promise<T> {
@@ -98,3 +108,8 @@ function safeJson(text: string): JsonObject {
 }
 
 export const metaClient = new MetaClient();
+
+function normalizeAdAccountId(value?: string): string | undefined {
+  if (!value) return undefined;
+  return value.startsWith("act_") ? value : `act_${value}`;
+}

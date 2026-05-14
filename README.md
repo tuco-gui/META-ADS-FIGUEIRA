@@ -24,6 +24,7 @@ CONFIRMO ALTERAR
 - Helmet, CORS e rate limit
 - Auditoria local em `audit.log`
 - Frontend simples em `/`
+- Login com cookie HTTP-only para proteger rotas operacionais
 
 ## Versoes e formato de targeting
 
@@ -67,15 +68,24 @@ OPENAI_MODEL=gpt-5.5
 META_ACCESS_TOKEN=EAAB...
 META_APP_ID=123456789
 META_APP_SECRET=app-secret
-META_BUSINESS_ID=123456789
-META_AD_ACCOUNT_ID=act_123456789
 META_API_VERSION=v24.0
+
+ADMIN_EMAIL=sguilherme@sz4marketing.com
+ADMIN_PASSWORD_HASH=scrypt:...
+SESSION_SECRET=...
+AUTH_COOKIE_SECURE=false
 
 PORT=3000
 CORS_ORIGIN=*
 ```
 
-`META_AD_ACCOUNT_ID` pode ser informado com ou sem `act_`.
+`META_BUSINESS_ID` e `META_AD_ACCOUNT_ID` agora são opcionais. Para multi-conta, deixe sem valor e selecione a conta no frontend ou informe `adAccountId` nas rotas.
+
+Em produção HTTPS, use:
+
+```env
+AUTH_COOKIE_SECURE=true
+```
 
 ## Permissoes Meta
 
@@ -115,10 +125,18 @@ Health check:
 curl http://localhost:3000/health
 ```
 
+Login:
+
+```bash
+curl -i -c cookies.txt -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"sguilherme@sz4marketing.com","password":"SUA_SENHA"}'
+```
+
 Validar `.env` sem expor segredos:
 
 ```bash
-curl http://localhost:3000/config/validate
+curl -b cookies.txt http://localhost:3000/config/validate
 ```
 
 Resposta esperada:
@@ -133,6 +151,9 @@ Leitura:
 
 ```bash
 curl http://localhost:3000/meta/ad-account
+curl -b cookies.txt http://localhost:3000/meta/ad-accounts
+curl -b cookies.txt "http://localhost:3000/meta/ad-account?adAccountId=act_123"
+curl -b cookies.txt "http://localhost:3000/meta/campaigns?adAccountId=act_123"
 curl http://localhost:3000/meta/campaigns
 curl http://localhost:3000/meta/adsets
 curl "http://localhost:3000/meta/adsets?campaignId=CAMPAIGN_ID"
@@ -310,6 +331,8 @@ Depois de renovar, atualize `META_ACCESS_TOKEN` e reinicie o servidor.
 
 ## Deploy
 
+GitHub Pages não é suficiente para este projeto completo, porque Pages só hospeda arquivos estáticos. Este app precisa de um backend Node.js para guardar variáveis de ambiente, autenticar login, chamar OpenAI e chamar Meta Marketing API. Use GitHub para o código e Render/Railway/VPS para rodar o servidor.
+
 ### Render
 
 1. Crie um Web Service apontando para o repositorio.
@@ -317,6 +340,7 @@ Depois de renovar, atualize `META_ACCESS_TOKEN` e reinicie o servidor.
 3. Start command: `npm start`
 4. Configure as variaveis de ambiente no painel.
 5. Use Node 20+.
+6. Em HTTPS, configure `AUTH_COOKIE_SECURE=true`.
 
 ### Railway
 

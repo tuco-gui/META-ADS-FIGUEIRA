@@ -10,6 +10,7 @@ const AD_SET_FIELDS = [
   "status",
   "effective_status",
   "configured_status",
+  "account_id",
   "campaign_id",
   "campaign{id,name,objective,status}",
   "daily_budget",
@@ -58,21 +59,48 @@ const INSIGHT_FIELDS = [
 ].join(",");
 
 export class MetaAdsService {
-  async getAdAccount(): Promise<JsonObject> {
-    return metaClient.get<JsonObject>(metaClient.adAccountId, {
+  async listBusinesses(): Promise<JsonObject[]> {
+    return metaClient.getAll<JsonObject>("me/businesses", {
+      fields: "id,name,verification_status,created_time",
+      limit: 100
+    });
+  }
+
+  async listAdAccounts(): Promise<JsonObject[]> {
+    return metaClient.getAll<JsonObject>("me/adaccounts", {
+      fields: "id,account_id,name,account_status,currency,timezone_name,business,amount_spent,balance",
+      limit: 100
+    });
+  }
+
+  async listBusinessAdAccounts(businessId: string): Promise<JsonObject> {
+    const fields = "id,account_id,name,account_status,currency,timezone_name,business,amount_spent,balance";
+    const [owned, client] = await Promise.all([
+      metaClient.getAll<JsonObject>(`${businessId}/owned_ad_accounts`, { fields, limit: 100 }),
+      metaClient.getAll<JsonObject>(`${businessId}/client_ad_accounts`, { fields, limit: 100 })
+    ]);
+    return {
+      owned,
+      client,
+      data: dedupeById([...owned, ...client])
+    };
+  }
+
+  async getAdAccount(adAccountId?: string): Promise<JsonObject> {
+    return metaClient.get<JsonObject>(metaClient.resolveAdAccountId(adAccountId), {
       fields: "id,name,account_status,currency,timezone_name,business,amount_spent,balance"
     });
   }
 
-  async listCampaigns(): Promise<JsonObject[]> {
-    return metaClient.getAll<JsonObject>(`${metaClient.adAccountId}/campaigns`, {
+  async listCampaigns(adAccountId?: string): Promise<JsonObject[]> {
+    return metaClient.getAll<JsonObject>(`${metaClient.resolveAdAccountId(adAccountId)}/campaigns`, {
       fields: CAMPAIGN_FIELDS,
       limit: 100
     });
   }
 
-  async listAdSets(campaignId?: string): Promise<JsonObject[]> {
-    const path = campaignId ? `${campaignId}/adsets` : `${metaClient.adAccountId}/adsets`;
+  async listAdSets(campaignId?: string, adAccountId?: string): Promise<JsonObject[]> {
+    const path = campaignId ? `${campaignId}/adsets` : `${metaClient.resolveAdAccountId(adAccountId)}/adsets`;
     return metaClient.getAll<JsonObject>(path, {
       fields: AD_SET_FIELDS,
       limit: 100
@@ -193,7 +221,7 @@ export class MetaAdsService {
 
     await auditLogger.write({
       action: "planLockAdSetGeoTargeting",
-      adAccountId: metaClient.adAccountId,
+      adAccountId: getAuditAdAccountId(adSet),
       campaignId: adSet.campaign_id,
       adSetId,
       before: beforeTargeting,
@@ -221,7 +249,7 @@ export class MetaAdsService {
       const after = await this.getAdSet(adSetId);
       await auditLogger.write({
         action: "lockAdSetGeoTargeting",
-        adAccountId: metaClient.adAccountId,
+        adAccountId: getAuditAdAccountId(adSet),
         campaignId: adSet.campaign_id,
         adSetId,
         before,
@@ -242,7 +270,7 @@ export class MetaAdsService {
         const after = await this.getAdSet(adSetId);
         await auditLogger.write({
           action: "lockAdSetGeoTargetingFallbackGeoOnly",
-          adAccountId: metaClient.adAccountId,
+          adAccountId: getAuditAdAccountId(adSet),
           campaignId: adSet.campaign_id,
           adSetId,
           before,
@@ -260,7 +288,7 @@ export class MetaAdsService {
 
       await auditLogger.write({
         action: "lockAdSetGeoTargeting",
-        adAccountId: metaClient.adAccountId,
+        adAccountId: getAuditAdAccountId(adSet),
         campaignId: adSet.campaign_id,
         adSetId,
         before,
@@ -342,7 +370,7 @@ export class MetaAdsService {
     };
     await auditLogger.write({
       action: `plan:${action}`,
-      adAccountId: metaClient.adAccountId,
+      adAccountId: getAuditAdAccountId(adSet),
       campaignId: adSet.campaign_id,
       adSetId,
       before: summarizeAdSetForPlan(adSet),
@@ -463,7 +491,7 @@ export class MetaAdsService {
       const after = await this.getAdSet(adSetId);
       await auditLogger.write({
         action,
-        adAccountId: metaClient.adAccountId,
+        adAccountId: getAuditAdAccountId(after),
         campaignId: typeof after.campaign_id === "string" ? after.campaign_id : undefined,
         adSetId,
         before,
@@ -475,7 +503,7 @@ export class MetaAdsService {
     } catch (error) {
       await auditLogger.write({
         action,
-        adAccountId: metaClient.adAccountId,
+        adAccountId: getAuditAdAccountId(before),
         campaignId:
           typeof before.campaign_id === "string" ? (before.campaign_id as string) : undefined,
         adSetId,
@@ -496,6 +524,24 @@ export class MetaAdsService {
 
 function readObject(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonObject) : {};
+}
+
+function dedupeById(items: JsonObject[]): JsonObject[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const id = typeof item.id === "string" ? item.id : "";
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function getAuditAdAccountId(value: JsonObject | MetaAdSet): string | undefined {
+  if (typeof value.account_id === "string") {
+    return value.account_id.startsWith("act_") ? value.account_id : `act_${value.account_id}`;
+  }
+  if (env.META_AD_ACCOUNT_ID) return env.META_AD_ACCOUNT_ID;
+  return undefined;
 }
 
 function summarizeLocations(geo: JsonObject): JsonObject {

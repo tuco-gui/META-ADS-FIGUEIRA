@@ -5,7 +5,16 @@ export const idParamSchema = z.object({
 });
 
 export const campaignQuerySchema = z.object({
-  campaignId: z.string().min(1).optional()
+  campaignId: z.string().min(1).optional(),
+  adAccountId: z.string().min(1).optional()
+});
+
+export const adAccountQuerySchema = z.object({
+  adAccountId: z.string().min(1).optional()
+});
+
+export const businessParamSchema = z.object({
+  businessId: z.string().min(1)
 });
 
 export const datePresetSchema = z

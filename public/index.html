@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meta Ads Figueira</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel header">
+        <div>
+          <p class="eyebrow">Meta Ads + OpenAI</p>
+          <h1>Meta Ads Figueira</h1>
+          <p class="muted">
+            Operacao assistida para campanhas, conjuntos, targeting e auditoria.
+          </p>
+        </div>
+        <button id="healthButton" class="icon-button" title="Verificar API">OK</button>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="section-title">
+            <h2>Chat operacional</h2>
+            <span id="sessionBadge"></span>
+          </div>
+          <div id="chatLog" class="chat-log"></div>
+          <form id="chatForm" class="chat-form">
+            <textarea
+              id="message"
+              rows="4"
+              placeholder="Ex.: Diagnostique o conjunto ADSET_ID e diga se pode entregar fora de Sao Paulo."
+            ></textarea>
+            <button type="submit">Enviar</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Testes rapidos</h2>
+          <div class="stack">
+            <button id="configButton">Validar .env</button>
+            <button id="accountButton">Conta de anuncios</button>
+            <button id="campaignsButton">Campanhas</button>
+          </div>
+          <label>
+            Ad set ID
+            <input id="adSetId" placeholder="ADSET_ID" />
+          </label>
+          <div class="stack">
+            <button id="adSetButton">Buscar ad set</button>
+            <button id="targetingButton">Targeting</button>
+            <button id="diagnoseButton">Diagnosticar</button>
+          </div>
+          <pre id="output">{}</pre>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

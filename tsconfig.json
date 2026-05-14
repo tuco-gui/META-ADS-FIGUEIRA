@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "noUncheckedIndexedAccess": true,
+    "types": [],
+    "lib": ["ES2022", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "cors": ["src/shims/external.d.ts"],
+      "dotenv/config": ["src/shims/external.d.ts"],
+      "express": ["src/shims/external.d.ts"],
+      "express-rate-limit": ["src/shims/external.d.ts"],
+      "helmet": ["src/shims/external.d.ts"],
+      "openai": ["src/shims/external.d.ts"],
+      "zod": ["src/shims/external.d.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

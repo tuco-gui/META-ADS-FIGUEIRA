@@ -28,6 +28,9 @@ export function createApp() {
     })
   );
   app.use(express.json({ limit: "1mb" }));
+  app.get("/", (_req, res) => {
+    res.redirect("/index.html");
+  });
   app.use(express.static(join(process.cwd(), "public")));
   app.use(router);
   app.use(errorHandler);

@@ -46,7 +46,7 @@ export const env = {
 export function requireEnv(name: keyof typeof env): string {
   const value = env[name];
   if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Missing required environment variable: ${name}`);
+    throw new Error(`Missing required environment variable: ${String(name)}`);
   }
   return value;
 }

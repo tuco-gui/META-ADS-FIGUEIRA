@@ -48,12 +48,15 @@ bind("#businessesButton", () => getJson("/meta/businesses"));
 bind("#accountsButton", loadAccounts);
 bind("#accountButton", () => getJson(withAdAccount("/meta/ad-account")));
 bind("#campaignsButton", () => getJson(withAdAccount("/meta/campaigns")));
+bind("#adSetsButton", () => getJson(withAdAccount("/meta/adsets")));
 bind("#adSetButton", () => getJson(`/meta/adsets/${adSetId()}`));
 bind("#targetingButton", () => getJson(`/meta/adsets/${adSetId()}/targeting`));
 bind("#diagnoseButton", () => getJson(`/meta/adsets/${adSetId()}/diagnose`));
 
 function bind(selector, handler) {
-  document.querySelector(selector).addEventListener("click", async () => {
+  const element = document.querySelector(selector);
+  if (!element) return;
+  element.addEventListener("click", async () => {
     try {
       setOutput(await handler());
     } catch (error) {
@@ -64,8 +67,15 @@ function bind(selector, handler) {
 
 function adSetId() {
   const value = document.querySelector("#adSetId").value.trim();
-  if (!value) throw new Error("Informe um Ad set ID.");
-  return encodeURIComponent(value);
+  if (!value) throw new Error("Informe o ID do conjunto de anúncios.");
+  return encodeURIComponent(cleanId(value));
+}
+
+function cleanId(value) {
+  let text = value.trim();
+  const colonIndex = text.indexOf(":");
+  if (colonIndex >= 0) text = text.slice(colonIndex + 1).trim();
+  return text;
 }
 
 async function getJson(url) {

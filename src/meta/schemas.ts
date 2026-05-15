@@ -1,11 +1,16 @@
 import { z } from "zod";
 
+const metaObjectIdSchema = z
+  .string()
+  .min(1)
+  .transform((value) => normalizeMetaObjectId(value));
+
 export const idParamSchema = z.object({
-  adSetId: z.string().min(1)
+  adSetId: metaObjectIdSchema
 });
 
 export const campaignQuerySchema = z.object({
-  campaignId: z.string().min(1).optional(),
+  campaignId: metaObjectIdSchema.optional(),
   adAccountId: z.string().min(1).optional()
 });
 
@@ -14,7 +19,7 @@ export const adAccountQuerySchema = z.object({
 });
 
 export const businessParamSchema = z.object({
-  businessId: z.string().min(1)
+  businessId: metaObjectIdSchema
 });
 
 export const datePresetSchema = z
@@ -57,3 +62,10 @@ export const chatBodySchema = z.object({
   sessionId: z.string().min(1).max(128).optional(),
   message: z.string().min(1)
 });
+
+function normalizeMetaObjectId(value: string): string {
+  const trimmed = value.trim();
+  const decoded = decodeURIComponent(trimmed);
+  const match = decoded.match(/^(?:ad_set_id|adset_id|campaign_id|business_id|id):(.+)$/i);
+  return match ? match[1].trim() : decoded;
+}

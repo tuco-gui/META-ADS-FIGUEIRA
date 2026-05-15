@@ -3,7 +3,23 @@
   "buildCommand": "npm run build",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/health",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/chat",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/config/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/meta/:path*",
       "destination": "/api/index"
     }
   ]

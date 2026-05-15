@@ -2,19 +2,30 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "listBusinesses",
-    description: "Lista Business Managers acessíveis pelo token Meta configurado.",
+    description: "Lista Business Managers acessiveis pelo token Meta configurado.",
     parameters: { type: "object", properties: {}, required: [], additionalProperties: false }
   },
   {
     type: "function",
     name: "listAdAccounts",
-    description: "Lista todas as contas de anúncios acessíveis pelo token Meta configurado.",
+    description: "Lista todas as contas de anuncios acessiveis pelo token Meta configurado.",
     parameters: { type: "object", properties: {}, required: [], additionalProperties: false }
   },
   {
     type: "function",
+    name: "findAdAccounts",
+    description: "Pesquisa contas de anuncios pelo nome ou ID. Use quando o usuario disser algo como conta Ortega, CA Ortega, Figueira etc.",
+    parameters: {
+      type: "object",
+      properties: { query: { type: "string" } },
+      required: ["query"],
+      additionalProperties: false
+    }
+  },
+  {
+    type: "function",
     name: "setActiveAdAccount",
-    description: "Define a conta de anúncios ativa da sessão de chat.",
+    description: "Define a conta de anuncios ativa da sessao de chat.",
     parameters: {
       type: "object",
       properties: { adAccountId: { type: "string" } },
@@ -25,7 +36,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "getAdAccount",
-    description: "Consulta dados básicos da conta de anúncios Meta selecionada ou informada.",
+    description: "Consulta dados basicos da conta de anuncios Meta selecionada ou informada.",
     parameters: {
       type: "object",
       properties: { adAccountId: { type: "string" } },
@@ -36,7 +47,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "listCampaigns",
-    description: "Lista campanhas da conta de anúncios Meta.",
+    description: "Lista campanhas da conta de anuncios Meta.",
     parameters: {
       type: "object",
       properties: { adAccountId: { type: "string" } },
@@ -46,8 +57,22 @@ export const openAiTools: any[] = [
   },
   {
     type: "function",
+    name: "analyzeCampaign",
+    description: "Analisa uma campanha inteira: campanha, conjuntos, anuncios, insights, alertas e sugestoes. Use para ID de campanha.",
+    parameters: {
+      type: "object",
+      properties: {
+        campaignId: { type: "string" },
+        datePreset: { type: "string", default: "last_30d" }
+      },
+      required: ["campaignId"],
+      additionalProperties: false
+    }
+  },
+  {
+    type: "function",
     name: "listAdSets",
-    description: "Lista conjuntos de anúncios. Pode filtrar por campaignId.",
+    description: "Lista conjuntos de anuncios. Pode filtrar por campaignId.",
     parameters: {
       type: "object",
       properties: { campaignId: { type: "string" }, adAccountId: { type: "string" } },
@@ -58,7 +83,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "getAdSet",
-    description: "Consulta detalhes de um conjunto de anúncios.",
+    description: "Consulta detalhes de um conjunto de anuncios.",
     parameters: {
       type: "object",
       properties: { adSetId: { type: "string" } },
@@ -69,7 +94,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "getAdSetTargeting",
-    description: "Consulta apenas o targeting de um conjunto de anúncios.",
+    description: "Consulta apenas o targeting de um conjunto de anuncios.",
     parameters: {
       type: "object",
       properties: { adSetId: { type: "string" } },
@@ -80,7 +105,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "getAdSetInsights",
-    description: "Consulta insights de um conjunto de anúncios por date_preset.",
+    description: "Consulta insights de um conjunto de anuncios por date_preset.",
     parameters: {
       type: "object",
       properties: {
@@ -108,8 +133,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "diagnoseAdSetTargeting",
-    description:
-      "Diagnostica geolocalização, location_types, Advantage Audience e riscos de expansão de um ad set.",
+    description: "Diagnostica geolocalizacao, location_types, Advantage Audience e riscos de expansao de um ad set.",
     parameters: {
       type: "object",
       properties: { adSetId: { type: "string" } },
@@ -120,8 +144,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "lockAdSetGeoTargeting",
-    description:
-      "Gera plano para travar geolocalização de um ad set. Nunca executa sem confirmação humana exata.",
+    description: "Gera plano para travar geolocalizacao de um ad set. Nunca executa sem confirmacao humana exata.",
     parameters: {
       type: "object",
       properties: {
@@ -152,7 +175,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "pauseAdSet",
-    description: "Gera plano para pausar um conjunto de anúncios. Exige confirmação.",
+    description: "Gera plano para pausar um conjunto de anuncios. Exige confirmacao.",
     parameters: {
       type: "object",
       properties: { adSetId: { type: "string" } },
@@ -163,7 +186,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "activateAdSet",
-    description: "Gera plano para ativar um conjunto de anúncios. Exige confirmação.",
+    description: "Gera plano para ativar um conjunto de anuncios. Exige confirmacao.",
     parameters: {
       type: "object",
       properties: { adSetId: { type: "string" } },
@@ -174,7 +197,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "updateAdSetDailyBudget",
-    description: "Gera plano para alterar orçamento diário em centavos. Exige confirmação.",
+    description: "Gera plano para alterar orcamento diario em centavos. Exige confirmacao.",
     parameters: {
       type: "object",
       properties: {
@@ -188,8 +211,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "updateAdSetTargeting",
-    description:
-      "Gera plano para aplicar patch de targeting. O app mescla o patch no targeting atual e valida antes de escrever.",
+    description: "Gera plano para aplicar patch de targeting. O app mescla o patch no targeting atual e valida antes de escrever.",
     parameters: {
       type: "object",
       properties: {
@@ -203,7 +225,7 @@ export const openAiTools: any[] = [
   {
     type: "function",
     name: "updateAdSetName",
-    description: "Gera plano para renomear conjunto de anúncios. Exige confirmação.",
+    description: "Gera plano para renomear conjunto de anuncios. Exige confirmacao.",
     parameters: {
       type: "object",
       properties: {

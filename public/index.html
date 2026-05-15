@@ -64,6 +64,7 @@
             <button id="accountsButton">Contas</button>
             <button id="accountButton">Conta ativa</button>
             <button id="campaignsButton">Campanhas</button>
+            <button id="adSetsButton">Conjuntos</button>
           </div>
           <label>
             Conta de anúncios
@@ -71,12 +72,15 @@
               <option value="">Selecione uma conta</option>
             </select>
           </label>
+          <p class="muted small-note">
+            Para diagnosticar targeting, clique em <strong>Conjuntos</strong> e copie o <strong>id</strong> de um conjunto de anúncios. Não use ID de campanha.
+          </p>
           <label>
-            Ad set ID
-            <input id="adSetId" placeholder="ADSET_ID" />
+            ID do conjunto de anúncios
+            <input id="adSetId" placeholder="Ex.: 120245475202310185" />
           </label>
           <div class="stack">
-            <button id="adSetButton">Buscar ad set</button>
+            <button id="adSetButton">Buscar conjunto</button>
             <button id="targetingButton">Targeting</button>
             <button id="diagnoseButton">Diagnosticar</button>
           </div>

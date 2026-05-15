@@ -21,7 +21,7 @@ document.querySelector("#loginForm").addEventListener("submit", async (event) =>
     showApp();
     await loadAccounts();
   } catch (error) {
-    document.querySelector("#loginError").textContent = "E-mail ou senha inválidos.";
+    document.querySelector("#loginError").textContent = "E-mail ou senha invalidos.";
   }
 });
 
@@ -49,6 +49,7 @@ bind("#accountsButton", loadAccounts);
 bind("#accountButton", () => getJson(withAdAccount("/meta/ad-account")));
 bind("#campaignsButton", () => getJson(withAdAccount("/meta/campaigns")));
 bind("#adSetsButton", () => getJson(withAdAccount("/meta/adsets")));
+bind("#analyzeCampaignButton", () => getJson(`/meta/campaigns/${campaignId()}/analyze`));
 bind("#adSetButton", () => getJson(`/meta/adsets/${adSetId()}`));
 bind("#targetingButton", () => getJson(`/meta/adsets/${adSetId()}/targeting`));
 bind("#diagnoseButton", () => getJson(`/meta/adsets/${adSetId()}/diagnose`));
@@ -65,9 +66,16 @@ function bind(selector, handler) {
   });
 }
 
+function campaignId() {
+  const input = document.querySelector("#campaignId") || document.querySelector("#adSetId");
+  const value = input.value.trim();
+  if (!value) throw new Error("Informe o ID da campanha.");
+  return encodeURIComponent(cleanId(value));
+}
+
 function adSetId() {
   const value = document.querySelector("#adSetId").value.trim();
-  if (!value) throw new Error("Informe o ID do conjunto de anúncios.");
+  if (!value) throw new Error("Informe o ID do conjunto de anuncios.");
   return encodeURIComponent(cleanId(value));
 }
 

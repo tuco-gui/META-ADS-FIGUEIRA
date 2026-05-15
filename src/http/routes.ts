@@ -2,6 +2,7 @@ import { Router } from "express";
 import { login, logout, me, requireAuth } from "../auth/auth.js";
 import { env } from "../config/env.js";
 import { chatService } from "../openai/chatService.js";
+import { campaignAnalysisService } from "../meta/campaignAnalysisService.js";
 import { metaAdsService } from "../meta/metaAdsService.js";
 import {
   budgetBodySchema,
@@ -111,6 +112,15 @@ router.get(
   asyncHandler(async (req, res) => {
     const parsed = campaignQuerySchema.parse(req.query);
     res.json({ data: await metaAdsService.listAdSets(parsed.campaignId, parsed.adAccountId) });
+  })
+);
+
+router.get(
+  "/meta/campaigns/:campaignId/analyze",
+  asyncHandler(async (req, res) => {
+    const params = idParamSchema.parse({ adSetId: req.params.campaignId });
+    const datePreset = datePresetSchema.parse(req.query.datePreset);
+    res.json(await campaignAnalysisService.analyzeCampaign(params.adSetId, datePreset));
   })
 );
 
